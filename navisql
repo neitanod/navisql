@@ -1,6 +1,20 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
+# Check if the required folder and files exists, create if not
+navi_folder="$HOME/.navisql"
+if [ ! -d "$navi_folder" ]; then
+mkdir "$navi_folder"
+fi
+config_file="$HOME/.navisql/navisql.json"
+if [ ! -f "$config_file" ]; then
+echo "{ \"connection\": {} }" > "$config_file"
+fi
+cache_file="$HOME/.navisql/navisql_cache.json"
+if [ ! -f "$cache_file" ]; then
+echo "{}" > "$cache_file"
+fi
+
 # Main script to delegate commands to specific scripts
 
 # Define a function to print the help
@@ -14,6 +28,7 @@ print_help() {
   echo "  list-connections  List all connections"
   echo "  cache-build       Build cache for databases and tables"
   echo "  add-fk            Add a foreign key reference"
+  echo "  configure         Add/replace/remove a configuration value"
 }
 
 # Check if at least one argument is provided
@@ -33,6 +48,9 @@ case "$command" in
     ;;
   show)
     ./navisql_show "$@"
+    ;;
+  configure)
+    ./navisql_configure "$@"
     ;;
   add-connection)
     ./navisql_add_connection "$@"

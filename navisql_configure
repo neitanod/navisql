@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Function to add foreign key reference to the configuration file
+navisql_config() {
+  # Load the configuration file
+  local config_file="$HOME/.navisql/navisql.json"
+
+  # Check if the configuration file exists
+  if [ ! -f "$config_file" ]; then
+    echo "Configuration file not found: $config_file"
+    return 1
+  fi
+
+  # If $1 is 'add', call the add function
+  if [ "$1" == "add" ]; then
+    navisql_add_conf "$2" "$3"
+  fi
+
+  # If $1 is 'remove', call the remove function
+  if [ "$1" == "remove" ]; then
+    navisql_remove_conf "$2" "$3"
+  fi
+}
+
+navisql_add_conf() {
+  KEY=$(echo "$1" | jq -R 'split(".")')
+  jq --argjson p "$KEY" --arg value "$2" '
+    setpath($p; $value)
+  ' "$config_file" > "$config_file.tmp" && mv "$config_file.tmp" "$config_file"
+
+  echo "Configuration added: $1 -> $2"
+}
+
+navisql_remove_conf() {
+  KEY=$(echo "$1" | jq -R 'split(".")')
+  jq --argjson p "$KEY" "
+    del(.$1)
+  " "$config_file" > "$config_file.tmp" && mv "$config_file.tmp" "$config_file"
+
+  echo "Configuration removed: $1"
+}
+
+# Check if the correct number of arguments are provided
+if [ "$#" -lt 2 ]; then
+  echo "Usage:"
+  echo "       navisql configure add <dot_separated_path> <value>"
+  echo "       navisql configure remove <dot_separated_path>"
+  exit 1
+fi
+
+# Call the function with the provided arguments
+navisql_config "$1" "$2" "$3"

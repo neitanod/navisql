@@ -112,7 +112,7 @@ navisql_ls() {
 
 # Check if the correct number of arguments are provided
 if [ "$#" -lt 3 ]; then
-  echo "Usage: navisql_ls <connection> <db> <table> [<page>] [--where=\"condition\"] [--per-page=<num>]"
+  echo "Usage: navisql_ls <connection> <db> <table> [<page>] [--where=\"<condition>\"] [--per-page=<num>]"
   exit 1
 fi
 

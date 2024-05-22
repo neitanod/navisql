@@ -32,7 +32,7 @@ navisql_add_fk() {
 
 # Check if the correct number of arguments are provided
 if [ "$#" -lt 5 ]; then
-  echo "Usage: navisql_add_fk <connection> <db> <table> <field> <referenced_table> [referenced_field]"
+  echo "Usage: navisql_add_fk <connection> <db> <table> <field> <referenced_table> [<referenced_field>]"
   exit 1
 fi
 

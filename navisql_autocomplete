@@ -15,16 +15,20 @@ _navisql_autocomplete() {
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-  opts="ls show add-connection remove-connection list-connections cache-build add-fk"
+  opts="ls show configure add-connection remove-connection list-connections cache-build add-fk"
 
-  #if config file does not exist, create it
-  if [ ! -f ~/.navisql/navisql.json ]; then
-    echo "{}" > ~/.navisql/navisql.json
+  # Check if the required folder and files exists, create if not
+  local navi_folder="$HOME/.navisql"
+  if [ ! -d "$navi_folder" ]; then
+  mkdir "$navi_folder"
   fi
-
-  #if cache file does not exist, create it
-  if [ ! -f ~/.navisql/navisql_cache.json ]; then
-    echo "{}" > ~/.navisql/navisql_cache.json
+  local config_file="$HOME/.navisql/navisql.json"
+  if [ ! -f "$config_file" ]; then
+  echo "{ \"connection\": {} }" > "$config_file"
+  fi
+  local cache_file="$HOME/.navisql/navisql_cache.json"
+  if [ ! -f "$cache_file" ]; then
+  echo "{}" > "$cache_file"
   fi
 
   if [[ ${COMP_CWORD} -eq 1 ]]; then
@@ -83,30 +87,35 @@ _navisql_autocomplete() {
         fi
       fi
 
-    if [[ "${COMP_WORDS[1]}" == "show" || "${COMP_WORDS[1]}" == "ls" ]]; then
-      if [[ ${COMP_CWORD} -eq 2 ]]; then
-        # Complete with connection names
-        local connections=$(jq -r '.connection | keys | .[]' ~/.navisql/navisql.json)
-        COMPREPLY=( $(compgen -W "${connections}" -- ${cur}) )
-        return 0
-      fi
+      if [[ "${COMP_WORDS[1]}" == "show" || "${COMP_WORDS[1]}" == "ls" ]]; then
+        if [[ ${COMP_CWORD} -eq 2 ]]; then
+          # Complete with connection names
+          local connections=$(jq -r '.connection | keys | .[]' ~/.navisql/navisql.json)
+          COMPREPLY=( $(compgen -W "${connections}" -- ${cur}) )
+          return 0
+        fi
 
-      if [[ ${COMP_CWORD} -eq 3 ]]; then
-        # Complete with database names
-        local dbs=$(jq -r 'keys | .[]' ~/.navisql/navisql_cache.json)
-        COMPREPLY=( $(compgen -W "${dbs}" -- ${cur}) )
-        return 0
-      fi
+        if [[ ${COMP_CWORD} -eq 3 ]]; then
+          # Complete with database names
+          local dbs=$(jq -r 'keys | .[]' ~/.navisql/navisql_cache.json)
+          COMPREPLY=( $(compgen -W "${dbs}" -- ${cur}) )
+          return 0
+        fi
 
-      if [[ ${COMP_CWORD} -eq 4 ]]; then
-        # Complete with table names
-        local db="${COMP_WORDS[3]}"
-        local tables=$(jq -r --arg db "$db" '.[$db] | .[]' ~/.navisql/navisql_cache.json)
-        COMPREPLY=( $(compgen -W "${tables}" -- ${cur}) )
-        return 0
+        if [[ ${COMP_CWORD} -eq 4 ]]; then
+          # Complete with table names
+          local db="${COMP_WORDS[3]}"
+          local tables=$(jq -r --arg db "$db" '.[$db] | .[]' ~/.navisql/navisql_cache.json)
+          COMPREPLY=( $(compgen -W "${tables}" -- ${cur}) )
+          return 0
+        fi
       fi
-    fi
-
+    ;;
+    configure)
+        if [[ ${COMP_CWORD} -eq 2 ]]; then
+          COMPREPLY=( $(compgen -W "add remove" -- ${cur}) )
+          return 0
+        fi
     ;;
   esac
 }
