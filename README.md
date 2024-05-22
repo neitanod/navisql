@@ -41,6 +41,11 @@ Configure it:
     # navisql add-connection <connection_name> <user> <password> [<host> [<port>]]
     navisql add-connection local sebas asfdasfd
 
+    # navisql cache-build <connection>
+    # will retrieve the list of databases and tables for the given connection
+    # and store it in a cache file to be used in the auto-completion
+    navisql cache-build local
+
 Customize it:
 
     # navisql_add_fk <connection> <db> <table> <field> <referenced_table> [<referenced_field>]"
@@ -56,6 +61,8 @@ Customize it:
     navisql configure add "web_edit" "http://www.local.ip1.cc/adminer/?server={{SERVER}}&username={{USER}}&db={{DB}}&edit={{TABLE}}&where%5Bid%5D={{ID}}"
 
 Use it:
+
+Note that most of the commands are auto-completed, so you can just type the first few letters and press `TAB` to auto-complete, including database names and table names once you run the cache-build utility for that database.  Also field names will be autocompleted, retrieving the field names from the table schema.
 
     $ navisql show local my_project_database users 1
 
