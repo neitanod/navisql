@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Function to list MySQL connection details from the configuration file
+navisql_list_connections() {
+  # Load the configuration file
+  local config_file="$HOME/.navisql/navisql.json"
+
+  # Check if the configuration file exists
+  if [ ! -f "$config_file" ]; then
+    echo "Configuration file not found: $config_file"
+    return 1
+  fi
+
+  # List the connection details using jq
+  jq -r '.connection | to_entries[] | "\(.key): \(.value.user)@\(.value.host):\(.value.port)"' "$config_file"
+}
+
+# Call the function to list the connections
+navisql_list_connections

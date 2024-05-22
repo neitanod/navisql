@@ -1,0 +1,120 @@
+#!/bin/bash
+
+# Function to read configuration values
+get_config_value() {
+  local key=$1
+  local config_file=$2
+  echo $(jq -r ".$key" "$config_file")
+}
+
+# Function to list paginated records from a MySQL table
+navisql_ls() {
+  local where=""
+  local per_page=30
+  local as_json=0
+
+  # Capture and remove options
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      --where=*)
+        where="${1#*=}"
+        shift
+        ;;
+      --per-page=*)
+        per_page="${1#*=}"
+        shift
+        ;;
+      --json)
+        as_json='1'
+        shift
+        ;;
+      *)
+        # store non named args in array
+        non_named_args+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  local connection=${non_named_args[0]}
+  local db=${non_named_args[1]}
+  local table=${non_named_args[2]}
+  local page=${non_named_args[3]:-1}
+
+  # min page = 1
+  if [ "$page" -lt 1 ]; then
+    page=1
+  fi
+
+  # Calculate offset for pagination
+  local offset=$(( (page - 1) * per_page ))
+
+  # min offset = 0
+  if [ "$offset" -lt 0 ]; then
+    offset=0
+  fi
+
+  # Load connection details from configuration file
+  local config_file="$HOME/.navisql/navisql.json"
+  MYSQL_USER=$(get_config_value "connection.$connection.user" "$config_file")
+  MYSQL_PASSWORD=$(get_config_value "connection.$connection.pass" "$config_file")
+  MYSQL_HOST=$(get_config_value "connection.$connection.host" "$config_file")
+  MYSQL_PORT=$(get_config_value "connection.$connection.port" "$config_file")
+
+  # Build the MySQL query
+  local query="SELECT * FROM $table"
+  if [[ -n "$where" ]]; then
+    query="$query WHERE $where"
+  fi
+  query="$query LIMIT $per_page OFFSET $offset"
+
+  # Execute the MySQL query
+  if [ "$as_json" -eq 0 ]; then
+  # Print tabular output
+    #result=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -e "$query")
+    #echo "$result"
+    mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -e "$query\G"
+    return
+  else
+    result=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -e "$query")
+    # Print JSON output
+    # First line contains column names, to be used in all objects
+    # Following lines contain data, to be split by tab and converted to objects
+    # Combine column names and data into objects
+
+    # Get column names
+    column_names=$(echo "$result" | head -n 1)
+    IFS=$'\t' read -r -a names <<< "$column_names"
+
+    # Get data
+    data=$(echo "$result" | tail -n +2)
+    IFS=$'\n' read -d '' -r -a rows <<< "$data"
+
+    # Combine column names and data into objects
+    for row in "${rows[@]}"; do
+      IFS=$'\t' read -r -a columns <<< "$row"
+      for i in "${!columns[@]}"; do
+        column_name=$(echo "${names[i]}" | awk '{print $1}')
+        #escape double quotes
+        #json_data+="\"$column_name\": \"${columns[i]}\", "
+        json_data+="\"$column_name\": \"${columns[i]//\"/\\\"}\", "
+      done
+      json_data=$(echo -e "$json_data")
+      json_data="{ $json_data }"
+      json_output+="$json_data\n"
+      json_data=""
+    done
+    echo -e "[$json_output]";
+    #echo -e "[$json_output]" | jq -s .
+
+  fi
+}
+
+# Check if the correct number of arguments are provided
+if [ "$#" -lt 3 ]; then
+  echo "Usage: navisql_ls <connection> <db> <table> [<page>] [--where=\"condition\"] [--per-page=<num>]"
+  exit 1
+fi
+
+# Call the function with the provided arguments
+navisql_ls "$@"

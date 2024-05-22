@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Function to remove MySQL connection details from the configuration file
+navisql_remove_connection() {
+  local connection=$1
+
+  # Load the configuration file
+  local config_file="$HOME/.navisql/navisql.json"
+
+  # Check if the configuration file exists
+  if [ ! -f "$config_file" ]; then
+    echo "Configuration file not found: $config_file"
+    return 1
+  fi
+
+  # Remove the connection details from the configuration file using jq
+  jq --arg connection "$connection" 'del(.connection[$connection])' "$config_file" > "$config_file.tmp" && mv "$config_file.tmp" "$config_file"
+
+  echo "Connection details removed: $connection"
+}
+
+# Check if the correct number of arguments are provided
+if [ "$#" -lt 1 ]; then
+  echo "Usage: navisql_remove_connection <connection>"
+  exit 1
+fi
+
+# Call the function with the provided argument
+navisql_remove_connection "$1"

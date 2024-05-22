@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Function to add foreign key reference to the configuration file
+navisql_add_fk() {
+  local connection=$1
+  local db=$2
+  local table=$3
+  local field=$4
+  local referenced_table=$5
+  local referenced_field=${6:-id}  # Default to 'id' if no referenced_field is provided
+
+  # Load the configuration file
+  local config_file="$HOME/.navisql/navisql.json"
+
+  # Check if the configuration file exists
+  if [ ! -f "$config_file" ]; then
+    echo "Configuration file not found: $config_file"
+    return 1
+  fi
+
+  # Add the foreign key reference to the configuration file using jq
+  jq --arg connection "$connection" --arg db "$db" --arg table "$table" --arg field "$field" --arg ref_table "$referenced_table" --arg ref_field "$referenced_field" '
+    .connection[$connection].foreign_keys[$table][$field] = {
+      "database": $db,
+      "table": $ref_table,
+      "id_field": $ref_field
+    }
+  ' "$config_file" > "$config_file.tmp" && mv "$config_file.tmp" "$config_file"
+
+  echo "Foreign key reference added: $table.$field -> $referenced_table.$referenced_field"
+}
+
+# Check if the correct number of arguments are provided
+if [ "$#" -lt 5 ]; then
+  echo "Usage: navisql_add_fk <connection> <db> <table> <field> <referenced_table> [referenced_field]"
+  exit 1
+fi
+
+# Call the function with the provided arguments
+navisql_add_fk "$1" "$2" "$3" "$4" "$5" "$6"

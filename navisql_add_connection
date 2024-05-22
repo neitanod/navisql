@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Function to add MySQL connection details to the configuration file
+navisql_add_connection() {
+  local connection=$1
+  local user=$2
+  local pass=$3
+  local host=${4:-127.0.0.1}  # Default to '127.0.0.1' if no host is provided
+  local port=${5:-3306}       # Default to '3306' if no port is provided
+
+  # Load the configuration file
+  local config_file="$HOME/.navisql/navisql.json"
+
+  # Check if the configuration file exists, create if not
+  if [ ! -f "$config_file" ]; then
+    echo "{}" > "$config_file"
+  fi
+
+  # Add the connection details to the configuration file using jq
+  jq --arg connection "$connection" --arg user "$user" --arg pass "$pass" --arg host "$host" --arg port "$port" '
+    .connection[$connection] = {
+      "user": $user,
+      "pass": $pass,
+      "host": $host,
+      "port": $port,
+      "foreign_keys": {}
+    }
+  ' "$config_file" > "$config_file.tmp" && mv "$config_file.tmp" "$config_file"
+
+  echo "Connection details added: $connection"
+}
+
+# Check if the correct number of arguments are provided
+if [ "$#" -lt 3 ]; then
+  echo "Usage: navisql_add_connection <connection> <user> <pass> [<host> [<port>]]"
+  exit 1
+fi
+
+# Call the function with the provided arguments
+navisql_add_connection "$1" "$2" "$3" "$4" "$5"

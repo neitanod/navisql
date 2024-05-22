@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Function to read configuration values
+get_config_value() {
+  local key=$1
+  local config_file=$2
+  echo $(jq -r ".$key" "$config_file")
+}
+
+# Function to build and cache MySQL database and table details
+navisql_cache_build() {
+  local connection=$1
+
+  # Load connection details from configuration file
+  local config_file="$HOME/.navisql/navisql.json"
+  local cache_file="$HOME/.navisql/navisql_cache.json"
+
+  # Check if the configuration file exists
+  if [ ! -f "$config_file" ]; then
+    echo "Configuration file not found: $config_file"
+    return 1
+  fi
+
+  # Load connection details
+  MYSQL_USER=$(get_config_value "connection.$connection.user" "$config_file")
+  MYSQL_PASSWORD=$(get_config_value "connection.$connection.pass" "$config_file")
+  MYSQL_HOST=$(get_config_value "connection.$connection.host" "$config_file")
+  MYSQL_PORT=$(get_config_value "connection.$connection.port" "$config_file")
+
+  # Check if cache file exists, create if not
+  if [ ! -f "$cache_file" ]; then
+    echo "{}" > "$cache_file"
+  fi
+
+  # Get list of databases
+  databases=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -e "SHOW DATABASES;" -s --skip-column-names)
+
+  # Iterate over each database and get list of tables
+  for db in $databases; do
+    tables=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -e "SHOW TABLES;" -s --skip-column-names)
+    tables_array=$(echo "$tables" | jq -R -s -c 'split("\n")[:-1]')
+
+    # Add database and tables to cache
+    jq --arg db "$db" --argjson tables "$tables_array" '.[$db] = $tables' "$cache_file" > "$cache_file.tmp" && mv "$cache_file.tmp" "$cache_file"
+  done
+
+  echo "Cache built for connection: $connection"
+}
+
+# Check if the correct number of arguments are provided
+if [ "$#" -lt 1 ]; then
+  echo "Usage: navisql_cache_build <connection>"
+  exit 1
+fi
+
+# Call the function with the provided argument
+navisql_cache_build "$1"

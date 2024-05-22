@@ -1,0 +1,57 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+
+# Main script to delegate commands to specific scripts
+
+# Define a function to print the help
+print_help() {
+  echo "Usage: navisql <command> [arguments]"
+  echo "Commands:"
+  echo "  ls                Prints a page of records from a given table"
+  echo "  show              Show the results of a query"
+  echo "  add-connection    Add a new connection"
+  echo "  remove-connection Remove an existing connection"
+  echo "  list-connections  List all connections"
+  echo "  cache-build       Build cache for databases and tables"
+  echo "  add-fk            Add a foreign key reference"
+}
+
+# Check if at least one argument is provided
+if [ "$#" -lt 1 ]; then
+  print_help
+  exit 1
+fi
+
+# Extract the command and shift the arguments
+command=$1
+shift
+
+# Delegate the work to the specific script based on the command
+case "$command" in
+  ls)
+    ./navisql_ls "$@"
+    ;;
+  show)
+    ./navisql_show "$@"
+    ;;
+  add-connection)
+    ./navisql_add_connection "$@"
+    ;;
+  remove-connection)
+    ./navisql_remove_connection "$@"
+    ;;
+  list-connections)
+    ./navisql_list_connections "$@"
+    ;;
+  cache-build)
+    ./navisql_cache_build "$@"
+    ;;
+  add-fk)
+    ./navisql_add_fk "$@"
+    ;;
+  *)
+    echo "Unknown command: $command"
+    print_help
+    exit 1
+    ;;
+esac

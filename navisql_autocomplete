@@ -1,0 +1,122 @@
+#!/bin/bash
+
+# Must be sourced, not just ran.
+
+# Wrong:
+#    ./navisql_autocomplete
+
+# Correct:
+#    . ./navisql_autocomplete
+
+# Autocomplete function for navisql commands
+_navisql_autocomplete() {
+  local cur prev opts
+  COMPREPLY=()
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+  opts="ls show add-connection remove-connection list-connections cache-build add-fk"
+
+  #if config file does not exist, create it
+  if [ ! -f ~/.navisql/navisql.json ]; then
+    echo "{}" > ~/.navisql/navisql.json
+  fi
+
+  #if cache file does not exist, create it
+  if [ ! -f ~/.navisql/navisql_cache.json ]; then
+    echo "{}" > ~/.navisql/navisql_cache.json
+  fi
+
+  if [[ ${COMP_CWORD} -eq 1 ]]; then
+    # First argument: complete with command options
+    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    return 0
+  fi
+
+  case "${COMP_WORDS[1]}" in
+    ls|show|add_connection|remove-connection|cache-build|list-connections|add-fk)
+      if [[ ${COMP_CWORD} -eq 2 ]]; then
+        # Complete with connection names
+        local connections=$(jq -r '.connection | keys | .[]' ~/.navisql/navisql.json)
+        COMPREPLY=( $(compgen -W "${connections}" -- ${cur}) )
+        return 0
+      fi
+
+      if [[ "${COMP_WORDS[1]}" == "add-fk" ]]; then
+        if [[ ${COMP_CWORD} -eq 3 ]]; then
+          # Complete with database names
+          local dbs=$(jq -r 'keys | .[]' ~/.navisql/navisql_cache.json)
+          COMPREPLY=( $(compgen -W "${dbs}" -- ${cur}) )
+          return 0
+        fi
+
+        if [[ ${COMP_CWORD} -eq 4 ]]; then
+          # Complete with table names
+          local db="${COMP_WORDS[3]}"
+          local tables=$(jq -r --arg db "$db" '.[$db] | .[]' ~/.navisql/navisql_cache.json)
+          COMPREPLY=( $(compgen -W "${tables}" -- ${cur}) )
+          return 0
+        fi
+
+        if [[ ${COMP_CWORD} -eq 5 ]]; then
+          # Complete with field names
+          local db="${COMP_WORDS[3]}"
+          local table="${COMP_WORDS[4]}"
+          # Get connection info from config file
+          local connection="${COMP_WORDS[2]}"
+          local MYSQL_USER=$(jq -r ".connection.$connection.user // empty" ~/.navisql/navisql.json)
+          local MYSQL_PASSWORD=$(jq -r ".connection.$connection.pass // empty" ~/.navisql/navisql.json)
+          local MYSQL_HOST=$(jq -r ".connection.$connection.host // empty" ~/.navisql/navisql.json)
+          local MYSQL_PORT=$(jq -r ".connection.$connection.port // empty" ~/.navisql/navisql.json)
+          # Get fields from a live mysql query
+          local fields=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -e "SHOW COLUMNS FROM $table" -s --skip-column-names | awk '{print $1}')
+          COMPREPLY=( $(compgen -W "${fields}" -- ${cur}) )
+          return 0
+        fi
+
+        if [[ ${COMP_CWORD} -eq 6 ]]; then
+          # Complete with referenced table names
+          local db="${COMP_WORDS[3]}"
+          local tables=$(jq -r --arg db "$db" '.[$db] | .[]' ~/.navisql/navisql_cache.json)
+          COMPREPLY=( $(compgen -W "${tables}" -- ${cur}) )
+          return 0
+        fi
+      fi
+
+    if [[ "${COMP_WORDS[1]}" == "show" || "${COMP_WORDS[1]}" == "ls" ]]; then
+      if [[ ${COMP_CWORD} -eq 2 ]]; then
+        # Complete with connection names
+        local connections=$(jq -r '.connection | keys | .[]' ~/.navisql/navisql.json)
+        COMPREPLY=( $(compgen -W "${connections}" -- ${cur}) )
+        return 0
+      fi
+
+      if [[ ${COMP_CWORD} -eq 3 ]]; then
+        # Complete with database names
+        local dbs=$(jq -r 'keys | .[]' ~/.navisql/navisql_cache.json)
+        COMPREPLY=( $(compgen -W "${dbs}" -- ${cur}) )
+        return 0
+      fi
+
+      if [[ ${COMP_CWORD} -eq 4 ]]; then
+        # Complete with table names
+        local db="${COMP_WORDS[3]}"
+        local tables=$(jq -r --arg db "$db" '.[$db] | .[]' ~/.navisql/navisql_cache.json)
+        COMPREPLY=( $(compgen -W "${tables}" -- ${cur}) )
+        return 0
+      fi
+    fi
+
+    ;;
+  esac
+}
+
+# Register the autocomplete function for navisql commands
+complete -F _navisql_autocomplete navisql
+
+# Ensure the autocomplete function is loaded for zsh
+if [ -n "$ZSH_VERSION" ]; then
+  autoload -Uz compinit && compinit
+  autoload -U bashcompinit && bashcompinit
+  complete -F _navisql_autocomplete navisql
+fi
