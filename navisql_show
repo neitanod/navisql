@@ -6,7 +6,7 @@ source ./lib/colors.sh
 get_config_value() {
   local key=$1
   local config_file=$2
-  echo $(jq -r ".$key" "$config_file")
+  jq -r ".$key // empty" "$config_file"
 }
 
 # Function to perform MySQL select and format the output
@@ -19,17 +19,27 @@ navisql() {
 
   # Load connection details from configuration file
   local config_file="$HOME/.navisql/navisql.json"
-  MYSQL_USER=$(get_config_value "connection.${connection}.user // empty" "$config_file")
+  MYSQL_USER=$(get_config_value "connection.${connection}.user" "$config_file")
   MYSQL_USER=${MYSQL_USER:-root}
-  MYSQL_PASSWORD=$(get_config_value "connection.${connection}.pass // empty" "$config_file")
-  MYSQL_HOST=$(get_config_value "connection.${connection}.host // empty" "$config_file")
+  MYSQL_PASSWORD=$(get_config_value "connection.${connection}.pass" "$config_file")
+  MYSQL_HOST=$(get_config_value "connection.${connection}.host" "$config_file")
   MYSQL_HOST=${MYSQL_HOST:-localhost}
-  MYSQL_PORT=$(get_config_value "connection.${connection}.port // empty" "$config_file")
+  MYSQL_PORT=$(get_config_value "connection.${connection}.port" "$config_file")
   MYSQL_PORT=${MYSQL_PORT:-3306}
-  WEB_EDIT=$(get_config_value "web_edit // empty" "$config_file")
+  WEB_EDIT=$(get_config_value "web_edit" "$config_file")
 
   # Perform the MySQL query
-  result=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -se "SELECT * FROM $table WHERE $id_field = $id;")
+  result=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -se "SELECT * FROM $table WHERE $id_field = '$id';")
+  # replace \n with \\n
+  result=$(echo "$result" | sed 's/\n/\\n/g')
+  # replace \ with \\
+  result=$(echo "$result" | sed 's/\\/\\\\/g')
+
+  #debug:
+  #echo $result
+  #echo "${GREY_BG}mysql -u \"$MYSQL_USER\" -p\"$MYSQL_PASSWORD\" -h \"$MYSQL_HOST\" -P \"$MYSQL_PORT\" -D \"$db\" -se${NORMAL_BG}"
+  #echo "${GREY_BG}SELECT * FROM $table WHERE $id_field = '$id';${NORMAL_BG}"
+  #return
 
   # Check if the result is empty
   if [ -z "$result" ]; then
@@ -41,29 +51,29 @@ navisql() {
     return
   fi
 
-  # Parse the result
-  IFS=$'\t' read -r -a columns <<< "$result"
-
   # Get column names
   column_names=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -se "SHOW COLUMNS FROM $table;")
   IFS=$'\n' read -d '' -r -a names <<< "$column_names"
 
-  RETURNED_ID=$i
+  mapfile -t columns < <(echo -e "$result" | awk -v RS='\t' '{print}')
+  mapfile -t columns < <(echo -e "$result" | awk -v RS='\t' '{print}')
+
+  RETURNED_ID=""
+
   # Display the result with potential foreign key references
-  for i in "${!columns[@]}"; do
+  for i in "${!names[@]}"; do
     column_name=$(echo "${names[i]}" | awk '{print $1}')
-    # if column name is "id", store in returned_id, but trim whitespaces first
-    column_name=$(echo "$column_name" | xargs)
-    if [[ "${column_name}" == "id" ]]; then
+    # if column name is "id", store in RETURNED_ID
+    if [[ "$column_name" == "id" ]]; then
       RETURNED_ID="${columns[i]}"
     fi
     echo "- ${GREEN}$column_name${NORMAL}: ${columns[i]}"
     foreign_key_config="connection.$connection.foreign_keys.$table.$column_name"
-    foreign_table=$(get_config_value "$foreign_key_config.table // empty" "$config_file")
+    foreign_table=$(get_config_value "$foreign_key_config.table" "$config_file")
     if [[ "$foreign_table" ]]; then
-      foreign_db=$(get_config_value "$foreign_key_config.database // empty" "$config_file")
+      foreign_db=$(get_config_value "$foreign_key_config.database" "$config_file")
       foreign_db=${foreign_db:-$db}
-      foreign_id_field=$(get_config_value "$foreign_key_config.id_field // empty" "$config_file")
+      foreign_id_field=$(get_config_value "$foreign_key_config.id_field" "$config_file")
       foreign_id_field=${foreign_id_field:-id}
       foreign_id_field_to_print=""
       if [[ "$foreign_id_field" != "id" ]]; then
@@ -73,9 +83,9 @@ navisql() {
     fi
   done
 
-  # "web_edit":"http://www.local.ip1.cc/adminer/?server={{SERVER}}&username={{USER}}&db={{DB}}&edit={{TABLE}}&where%5Bid%5D={{ID}}",
+  # Web edit link
   if [[ "$WEB_EDIT" ]]; then
-    WEB_EDIT=$(echo "$WEB_EDIT" | sed "s/{{SERVER}}/$MYSQL_HOST/g" | sed "s/{{USER}}/$MYSQL_USER/g" | sed "s/{{DB}}/$db/g" | sed "s/{{TABLE}}/$table/g" | sed "s/{{ID}}/${RETURNED_ID}/g")
+    WEB_EDIT=$(echo "$WEB_EDIT" | sed "s/{{SERVER}}/$MYSQL_HOST/g" | sed "s/{{USER}}/$MYSQL_USER/g" | sed "s/{{DB}}/$db/g" | sed "s/{{TABLE}}/$table/g" | sed "s/{{ID}}/$RETURNED_ID/g")
     echo "[ Web edit: ${GREY_BG} $WEB_EDIT ${NORMAL_BG} ]"
   fi
 }

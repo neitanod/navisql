@@ -42,6 +42,8 @@ command=$1
 shift
 
 # Delegate the work to the specific script based on the command
+save_history=true
+
 case "$command" in
   ls)
     ./navisql_ls "$@"
@@ -68,8 +70,15 @@ case "$command" in
     ./navisql_add_fk "$@"
     ;;
   *)
+    save_history=false
     echo "Unknown command: $command"
     print_help
     exit 1
     ;;
 esac
+# if variable save_history is true, save the command to history
+if [ "$save_history" = true ]; then
+  # Save the command to history in the format: "navisql <command> <arguments>"
+  # into file ~/.navisql/history
+  echo "navisql $command $*" >> "$HOME/.navisql/history"
+fi
