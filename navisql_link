@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# Function to get the next key
+get_next_key() {
+  local last_key=$1
+  if [[ "$last_key" =~ [0-9] ]]; then
+    if [ "$last_key" -eq 9 ]; then
+      echo "a"
+    else
+      echo $((last_key + 1))
+    fi
+  elif [[ "$last_key" =~ [a-z] ]]; then
+    if [ "$last_key" == "z" ]; then
+      echo "1"
+    else
+      printf "\\$(printf '%03o' $(( $(printf '%d' "'$last_key") + 1 )))"
+    fi
+  else
+    echo "1"
+  fi
+}
+
+# Function to add or replace key/value pair in the links file
+add_or_replace_link() {
+  local value=$1
+  local links_file="$HOME/.navisql/links"
+
+  # Check if the links file exists, create if not
+  if [ ! -f "$links_file" ]; then
+    touch "$links_file"
+  fi
+
+  # Check if the value already exists and return the existing key
+  existing_key=$(grep -F "|$value" "$links_file" | cut -d'|' -f1)
+  if [ -n "$existing_key" ]; then
+    echo "$existing_key"
+    return 0
+  fi
+
+
+  # Get the last key
+  last_key=$(tail -n 1 "$links_file" | cut -d'|' -f1 | cut -d' ' -f2)
+  next_key=$(get_next_key "$last_key")
+
+  # Remove the old key if it exists
+  sed -i "/^navi $next_key|/d" "$links_file"
+
+  # Add the new key/value pair
+  echo "navi $next_key|$value" >> "$links_file"
+
+  # Return the new key
+  echo "navi $next_key"
+}
+
+# Check if the correct number of arguments are provided
+if [ "$#" -lt 1 ]; then
+  echo "Usage: navi_link <command>"
+  exit 1
+fi
+
+# Call the function with the provided argument
+add_or_replace_link "$1"

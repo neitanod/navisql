@@ -1,0 +1,44 @@
+#!/bin/bash
+
+source ./lib/colors.sh
+
+# Function to read and execute the command based on the key
+execute_command() {
+  local key=$1
+  local links_file="$HOME/.navisql/links"
+
+  # Check if the links file exists
+  if [ ! -f "$links_file" ]; then
+    echo "Links file not found: $links_file"
+    exit 1
+  fi
+
+  # Read the command corresponding to the key
+  local command=$(grep "^navi $key|" "$links_file" | cut -d'|' -f2-)
+
+  # Check if the command was found
+  if [ -z "$command" ]; then
+    echo "No command found for key: $key"
+    exit 1
+  fi
+
+  # if the command is an url, open it in the browser
+  if [[ $command == http* ]]; then
+    echo "${GREY_BG}open $command${NORMAL_BG}"
+    open $command
+    exit 0
+  else
+    # Execute the command
+    echo "${GREY_BG}$command${NORMAL_BG}"
+    eval "$command"
+  fi
+}
+
+# Check if the correct number of arguments are provided
+if [ "$#" -lt 1 ]; then
+  echo "Usage: navi <key>"
+  exit 1
+fi
+
+# Call the function with the provided argument
+execute_command "$1"

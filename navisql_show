@@ -67,7 +67,8 @@ navisql() {
     if [[ "$column_name" == "id" ]]; then
       RETURNED_ID="${columns[i]}"
     fi
-    echo "- ${GREEN}$column_name${NORMAL}: ${columns[i]}"
+    navi_link=""
+    link=""
     foreign_key_config="connection.$connection.foreign_keys.$table.$column_name"
     foreign_table=$(get_config_value "$foreign_key_config.table" "$config_file")
     if [[ "$foreign_table" ]]; then
@@ -79,14 +80,19 @@ navisql() {
       if [[ "$foreign_id_field" != "id" ]]; then
         foreign_id_field_to_print=" ($foreign_id_field)"
       fi
-      echo "${YELLOW}navisql show $connection $foreign_db $foreign_table ${columns[i]} $foreign_id_field_to_print${NORMAL}"
+      #navi_link="${YELLOW}navisql show $connection $foreign_db $foreign_table ${columns[i]} $foreign_id_field_to_print${NORMAL}"
+      link="navisql show $connection $foreign_db $foreign_table ${columns[i]} $foreign_id_field_to_print"
+      navi_link=$(./navisql_link "$link")
+      navi_link="[${YELLOW}$navi_link${NORMAL}]"
     fi
+    echo "- ${GREEN}$column_name${NORMAL}: ${columns[i]} $navi_link"
   done
 
   # Web edit link
   if [[ "$WEB_EDIT" ]]; then
     WEB_EDIT=$(echo "$WEB_EDIT" | sed "s/{{SERVER}}/$MYSQL_HOST/g" | sed "s/{{USER}}/$MYSQL_USER/g" | sed "s/{{DB}}/$db/g" | sed "s/{{TABLE}}/$table/g" | sed "s/{{ID}}/$RETURNED_ID/g")
-    echo "[ Web edit: ${GREY_BG} $WEB_EDIT ${NORMAL_BG} ]"
+    navi_link_edit=$(./navisql_link "$WEB_EDIT")
+    echo "[ Web edit: [${YELLOW}$navi_link_edit${NORMAL}] ${GREY_BG} $WEB_EDIT ${NORMAL_BG} ]"
   fi
 }
 

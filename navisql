@@ -1,6 +1,8 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
+source ./lib/colors.sh
+
 # Check if the required folder and files exists, create if not
 navi_folder="$HOME/.navisql"
 if [ ! -d "$navi_folder" ]; then
@@ -29,6 +31,7 @@ print_help() {
   echo "  cache-build       Build cache for databases and tables"
   echo "  add-fk            Add a foreign key reference"
   echo "  configure         Add/replace/remove a configuration value"
+  echo "  history           Show latest history entries"
 }
 
 # Check if at least one argument is provided
@@ -68,6 +71,23 @@ case "$command" in
     ;;
   add-fk)
     ./navisql_add_fk "$@"
+    ;;
+  history)
+    # Print the history of commands
+    # Print with line numbers
+    history=$(tail -n 30 "$HOME/.navisql/history" | cat -n)
+    # Re-execute selected command (selected by number in $1)
+    if [ -n "$1" ]; then
+      selected_command=$(echo "$history" | grep "^ *$1" | sed "s/^ *$1[^ ]* *//")
+      if [ -n "$selected_command" ]; then
+        echo "${GREY_BG}navisql $selected_command${NORMAL_BG}"
+        eval "navisql $selected_command"
+      fi
+    else
+      echo "$history"
+    fi
+
+    save_history=false
     ;;
   *)
     save_history=false
