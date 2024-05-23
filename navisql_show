@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ./lib/colors.sh
+
 # Function to read configuration values
 get_config_value() {
   local key=$1
@@ -55,7 +57,7 @@ navisql() {
     if [[ "${column_name}" == "id" ]]; then
       RETURNED_ID="${columns[i]}"
     fi
-    echo "- $column_name: ${columns[i]}"
+    echo "- ${GREEN}$column_name${NORMAL}: ${columns[i]}"
     foreign_key_config="connection.$connection.foreign_keys.$table.$column_name"
     foreign_table=$(get_config_value "$foreign_key_config.table // empty" "$config_file")
     if [[ "$foreign_table" ]]; then
@@ -67,14 +69,14 @@ navisql() {
       if [[ "$foreign_id_field" != "id" ]]; then
         foreign_id_field_to_print=" ($foreign_id_field)"
       fi
-      echo "navisql show $connection $foreign_db $foreign_table ${columns[i]} $foreign_id_field_to_print"
+      echo "${YELLOW}navisql show $connection $foreign_db $foreign_table ${columns[i]} $foreign_id_field_to_print${NORMAL}"
     fi
   done
 
   # "web_edit":"http://www.local.ip1.cc/adminer/?server={{SERVER}}&username={{USER}}&db={{DB}}&edit={{TABLE}}&where%5Bid%5D={{ID}}",
   if [[ "$WEB_EDIT" ]]; then
     WEB_EDIT=$(echo "$WEB_EDIT" | sed "s/{{SERVER}}/$MYSQL_HOST/g" | sed "s/{{USER}}/$MYSQL_USER/g" | sed "s/{{DB}}/$db/g" | sed "s/{{TABLE}}/$table/g" | sed "s/{{ID}}/${RETURNED_ID}/g")
-    echo "[ Web edit: $WEB_EDIT ]"
+    echo "[ Web edit: ${GREY_BG} $WEB_EDIT ${NORMAL_BG} ]"
   fi
 }
 
