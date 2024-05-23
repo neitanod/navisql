@@ -1,4 +1,5 @@
 #!/bin/bash
+cd "$(dirname "$0")"
 
 source ./lib/colors.sh
 
@@ -29,8 +30,8 @@ execute_command() {
     exit 0
   else
     # Execute the command
-    echo "${GREY_BG}$command${NORMAL_BG}"
-    eval "$command"
+    echo "${GREY_BG}$command${NORMAL_BG}" ;
+    eval "./$command"
   fi
 }
 

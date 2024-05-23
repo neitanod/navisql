@@ -6,6 +6,7 @@
 #    ./navisql_autocomplete
 
 # Correct:
+#    source ./navisql_autocomplete
 #    . ./navisql_autocomplete
 
 # Autocomplete function for navisql commands
@@ -15,7 +16,7 @@ _navisql_autocomplete() {
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-  opts="ls show configure add-connection remove-connection list-connections cache-build add-fk history"
+  opts="ls show configure connection-add connection-remove connection-list cache-build fk-add history"
 
   # Check if the required folder and files exists, create if not
   local navi_folder="$HOME/.navisql"
@@ -38,7 +39,7 @@ _navisql_autocomplete() {
   fi
 
   case "${COMP_WORDS[1]}" in
-    ls|show|add_connection|remove-connection|cache-build|list-connections|add-fk)
+    ls|show|connection-add|connection-remove|cache-build|connection-list|fk-add)
       if [[ ${COMP_CWORD} -eq 2 ]]; then
         # Complete with connection names
         local connections=$(jq -r '.connection | keys | .[]' ~/.navisql/navisql.json)
@@ -46,7 +47,7 @@ _navisql_autocomplete() {
         return 0
       fi
 
-      if [[ "${COMP_WORDS[1]}" == "add-fk" ]]; then
+      if [[ "${COMP_WORDS[1]}" == "fk-add" ]]; then
         if [[ ${COMP_CWORD} -eq 3 ]]; then
           # Complete with database names
           local dbs=$(jq -r 'keys | .[]' ~/.navisql/navisql_cache.json)

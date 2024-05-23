@@ -22,22 +22,33 @@ Install it:
 
     git clone https://github.com/neitanod/navisql.git ~/navisql
 
-    echo "alias navisql='~/navisql/navisql'" >> ~/.bashrc
-    echo "alias navi='~/navisql/navi'" >> ~/.bashrc
-    echo "source ~/navisql/navisql_autocomplete" >> ~/.bashrc
-
-    echo "alias navisql='~/navisql/navisql'" >> ~/.zshrc
-    echo "alias navi='~/navisql/navi'" >> ~/.zshrc
-    echo "source ~/navisql/navisql_autocomplete" >> ~/.zshrc
-
-    # Restart your shell or run this right away:
-
-    alias navisql='~/navisql/navisql'
-    alias navi='~/navisql/navi'
-    source ~/navisql/navisql_autocomplete
-
     # Install dependencies:
     sudo apt-get install jq mysql-client
+
+    # To install it in BASH:
+ 
+    echo 'navisql() {' >> ~/.bashrc
+    echo '  ~/navisql/navisql "$@"' >> ~/.bashrc
+    echo '}' >> ~/.bashrc
+    echo 'navi() {' >> ~/.bashrc
+    echo '  ~/navisql/navi "$@"' >> ~/.bashrc
+    echo '}' >> ~/.bashrc
+    echo 'source ~/navisql/navisql_autocomplete' >> ~/.bashrc
+
+    # To install it in ZSH:
+
+    echo 'navisql() {' >> ~/.zshrc
+    echo '  ~/navisql/navisql "$@"' >> ~/.zshrc
+    echo '}' >> ~/.zshrc
+    echo 'navi() {' >> ~/.zshrc
+    echo '  ~/navisql/navi "$@"' >> ~/.zshrc
+    echo '}' >> ~/.zshrc
+    echo 'source ~/navisql/navisql_autocomplete' >> ~/.zshrc
+
+    # Restart your shell:
+    bash
+    # or
+    zsh 
 
 Configure it:
 

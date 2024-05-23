@@ -23,15 +23,16 @@ fi
 print_help() {
   echo "Usage: navisql <command> [arguments]"
   echo "Commands:"
-  echo "  ls                Prints a page of records from a given table"
-  echo "  show              Show the results of a query"
-  echo "  add-connection    Add a new connection"
-  echo "  remove-connection Remove an existing connection"
-  echo "  list-connections  List all connections"
-  echo "  cache-build       Build cache for databases and tables"
-  echo "  add-fk            Add a foreign key reference"
-  echo "  configure         Add/replace/remove a configuration value"
-  echo "  history           Show latest history entries"
+  echo "  ${GREEN}ls               ${YELLOW} Prints a page of records from a given table${NORMAL}"
+  echo "  ${GREEN}show             ${YELLOW} Show a record by id${NORMAL}"
+  echo "  ${GREEN}query            ${YELLOW} Run a custom query${NORMAL}"
+  echo "  ${GREEN}connection-add   ${YELLOW} Add a new connection${NORMAL}"
+  echo "  ${GREEN}connection-remove${YELLOW} Remove an existing connection${NORMAL}"
+  echo "  ${GREEN}connections-list ${YELLOW} List all connections${NORMAL}"
+  echo "  ${GREEN}cache-build      ${YELLOW} Build cache for databases and tables${NORMAL}"
+  echo "  ${GREEN}fk-add           ${YELLOW} Add a foreign key reference${NORMAL}"
+  echo "  ${GREEN}configure        ${YELLOW} Add/replace/remove a configuration value${NORMAL}"
+  echo "  ${GREEN}history          ${YELLOW} Show latest history entries${NORMAL}"
 }
 
 # Check if at least one argument is provided
@@ -54,23 +55,26 @@ case "$command" in
   show)
     ./navisql_show "$@"
     ;;
+  query)
+    ./navisql_query "$@"
+    ;;
   configure)
     ./navisql_configure "$@"
     ;;
   add-connection)
-    ./navisql_add_connection "$@"
+    ./navisql_connection_add "$@"
     ;;
-  remove-connection)
-    ./navisql_remove_connection "$@"
+  connection-remove)
+    ./navisql_connection_remove "$@"
     ;;
-  list-connections)
-    ./navisql_list_connections "$@"
+  connection-list)
+    ./navisql_connection_list "$@"
     ;;
   cache-build)
     ./navisql_cache_build "$@"
     ;;
-  add-fk)
-    ./navisql_add_fk "$@"
+  fk-add)
+    ./navisql_fk_add "$@"
     ;;
   history)
     # Print the history of commands
@@ -78,10 +82,10 @@ case "$command" in
     history=$(tail -n 30 "$HOME/.navisql/history" | cat -n)
     # Re-execute selected command (selected by number in $1)
     if [ -n "$1" ]; then
-      selected_command=$(echo "$history" | grep "^ *$1" | sed "s/^ *$1[^ ]* *//")
+      selected_command=$(echo "$history" | grep "^ *$1\W" | sed "s/^ *$1[^ ]* *//")
       if [ -n "$selected_command" ]; then
         echo "${GREY_BG}navisql $selected_command${NORMAL_BG}"
-        eval "navisql $selected_command"
+        bash -c "./navisql $selected_command"
       fi
     else
       echo "$history"
