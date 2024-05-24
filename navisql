@@ -63,7 +63,7 @@ case "$command" in
   configure)
     ./navisql_configure "$@"
     ;;
-  add-connection)
+  connection-add)
     ./navisql_connection_add "$@"
     ;;
   connection-remove)
