@@ -25,28 +25,15 @@ Install it:
     # Install dependencies:
     sudo apt-get install jq mysql-client
 
-    # To install it in BASH:
- 
-    echo 'navisql() {' >> ~/.bashrc
-    echo '  ~/navisql/navisql "$@"' >> ~/.bashrc
-    echo '}' >> ~/.bashrc
-    echo 'navi() {' >> ~/.bashrc
-    echo '  ~/navisql/navi "$@"' >> ~/.bashrc
-    echo '}' >> ~/.bashrc
-    echo 'source ~/navisql/navisql_autocomplete' >> ~/.bashrc
+    # To install it:
+    . ~/navisql/install_bash
 
-    # To install it in ZSH:
-
-    echo 'navisql() {' >> ~/.zshrc
-    echo '  ~/navisql/navisql "$@"' >> ~/.zshrc
-    echo '}' >> ~/.zshrc
-    echo 'navi() {' >> ~/.zshrc
-    echo '  ~/navisql/navi "$@"' >> ~/.zshrc
-    echo '}' >> ~/.zshrc
-    echo 'source ~/navisql/navisql_autocomplete' >> ~/.zshrc
+    # or
+    . ~/navisql/install_zsh
 
     # Restart your shell:
     bash
+
     # or
     zsh 
 

@@ -1,0 +1,8 @@
+#!/bin/bash
+echo 'navisql() {' >> ~/.bashrc
+echo '  ~/navisql/navisql "$@"' >> ~/.bashrc
+echo '}' >> ~/.bashrc
+echo 'navi() {' >> ~/.bashrc
+echo '  ~/navisql/navi "$@"' >> ~/.bashrc
+echo '}' >> ~/.bashrc
+echo 'source ~/navisql/navisql_autocomplete' >> ~/.bashrc
