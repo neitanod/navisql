@@ -56,7 +56,9 @@ case "$command" in
     ./navisql_show "$@"
     ;;
   query)
+    save_history=false   # Save history in a custom way
     ./navisql_query "$@"
+     echo "navisql $command $1 $2 \"$3\"" >> "$HOME/.navisql/history"
     ;;
   configure)
     ./navisql_configure "$@"
@@ -79,7 +81,7 @@ case "$command" in
   history)
     # Print the history of commands
     # Print with line numbers
-    history=$(tail -n 30 "$HOME/.navisql/history" | cat -n)
+    history=$(tail -n 70 "$HOME/.navisql/history" | cat -n)
     # Re-execute selected command (selected by number in $1)
     if [ -n "$1" ]; then
       selected_command=$(echo "$history" | grep "^ *$1\W" | sed "s/^ *$1[^ ]* *//")

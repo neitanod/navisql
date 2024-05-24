@@ -1,0 +1,48 @@
+#!/bin/bash
+
+source ./lib/colors.sh
+
+# Function to read configuration values
+get_config_value() {
+  local key=$1
+  local config_file=$2
+  jq -r ".$key // empty" "$config_file"
+}
+
+# Function to perform MySQL select and format the output
+navisql_query() {
+  local connection=$1
+  local db=$2
+  local sql=$3
+
+  # Load connection details from configuration file
+  local config_file="$HOME/.navisql/navisql.json"
+  MYSQL_USER=$(get_config_value "connection.${connection}.user" "$config_file")
+  MYSQL_USER=${MYSQL_USER:-root}
+  MYSQL_PASSWORD=$(get_config_value "connection.${connection}.pass" "$config_file")
+  MYSQL_HOST=$(get_config_value "connection.${connection}.host" "$config_file")
+  MYSQL_HOST=${MYSQL_HOST:-localhost}
+  MYSQL_PORT=$(get_config_value "connection.${connection}.port" "$config_file")
+  MYSQL_PORT=${MYSQL_PORT:-3306}
+  WEB_EDIT=$(get_config_value "web_edit" "$config_file")
+
+  # Perform the MySQL query
+  mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -se "$sql"
+#  result=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -se "$sql")
+#
+#  # Check if the result is empty
+#  if [ -z "$result" ]; then
+#    echo "Empty result"
+#  else
+#    echo $result
+#  fi
+}
+
+# Check if the correct number of arguments are provided
+if [ "$#" -lt 3 ]; then
+  echo "Usage: navisql query <connection> <db> <query>";
+  exit 1
+fi
+
+# Call the function with the provided arguments
+navisql_query "$1" "$2" "$3" "$4"
