@@ -92,7 +92,7 @@ navisql() {
   if [[ "$WEB_EDIT" ]]; then
     WEB_EDIT=$(echo "$WEB_EDIT" | sed "s/{{SERVER}}/$MYSQL_HOST/g" | sed "s/{{USER}}/$MYSQL_USER/g" | sed "s/{{DB}}/$db/g" | sed "s/{{TABLE}}/$table/g" | sed "s/{{ID}}/$RETURNED_ID/g")
     navi_link_edit=$(./navisql_link "$WEB_EDIT")
-    echo "[ Web edit: [${YELLOW}$navi_link_edit${NORMAL}] ${GREY_BG} $WEB_EDIT ${NORMAL_BG} ]"
+    echo "Web edit: [${YELLOW}$navi_link_edit${NORMAL}] ${GREY_BG} $WEB_EDIT ${NORMAL_BG}"
   fi
 }
 
