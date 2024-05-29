@@ -17,7 +17,9 @@ Requirements:
 Sample usage:
 -------------
 
-https://notas.ip1.cc/varios/navisql/navisql_usage_demo.mp4
+
+![Video Demo](https://notas.ip1.cc/varios/navisql/navisql_usage_demo.gif)
+
 
 Install it:
 
