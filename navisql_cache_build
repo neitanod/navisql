@@ -50,7 +50,7 @@ navisql_cache_build() {
 
 # Check if the correct number of arguments are provided
 if [ "$#" -lt 1 ]; then
-  echo "Usage: navisql_cache_build <connection>"
+  echo "Usage: navisql cache-build <connection>"
   exit 1
 fi
 

@@ -21,7 +21,7 @@ navisql_remove_connection() {
 
 # Check if the correct number of arguments are provided
 if [ "$#" -lt 1 ]; then
-  echo "Usage: navisql_remove_connection <connection>"
+  echo "Usage: navisql connection-remove <connection>"
   exit 1
 fi
 

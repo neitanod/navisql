@@ -32,7 +32,7 @@ navisql_add_connection() {
 
 # Check if the correct number of arguments are provided
 if [ "$#" -lt 3 ]; then
-  echo "Usage: navisql_add_connection <connection> <user> <pass> [<host> [<port>]]"
+  echo "Usage: navisql connection-add <connection> <user> <pass> [<host> [<port>]]"
   exit 1
 fi
 

@@ -54,7 +54,7 @@ add_or_replace_link() {
 
 # Check if the correct number of arguments are provided
 if [ "$#" -lt 1 ]; then
-  echo "Usage: navi_link <command>"
+  echo "Usage: navi link <command>"
   exit 1
 fi
 
