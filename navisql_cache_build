@@ -40,8 +40,9 @@ navisql_cache_build() {
     tables=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -e "SHOW TABLES;" -s --skip-column-names)
     tables_array=$(echo "$tables" | jq -R -s -c 'split("\n")[:-1]')
 
-    # Add database and tables to cache
-    jq --arg db "$db" --argjson tables "$tables_array" '.[$db] = $tables' "$cache_file" > "$cache_file.tmp" && mv "$cache_file.tmp" "$cache_file"
+    # Add connection, database, and tables to cache
+    jq --arg connection "$connection" --arg db "$db" --argjson tables "$tables_array" \
+      '.[$connection][$db] = $tables' "$cache_file" > "$cache_file.tmp" && mv "$cache_file.tmp" "$cache_file"
   done
 
   echo "Cache built for connection: $connection"
