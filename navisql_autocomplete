@@ -16,7 +16,7 @@ _navisql_autocomplete() {
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-  opts="ls show configure connection-add connection-remove connection-list cache-build fk-add history"
+  opts="ls show config connection-add connection-remove connection-list cache-build fk-add history"
 
   # Check if the required folder and files exists, create if not
   local navi_folder="$HOME/.navisql"
@@ -112,7 +112,7 @@ _navisql_autocomplete() {
         fi
       fi
     ;;
-    configure)
+    config)
         if [[ ${COMP_CWORD} -eq 2 ]]; then
           COMPREPLY=( $(compgen -W "add remove" -- ${cur}) )
           return 0

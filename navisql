@@ -31,7 +31,7 @@ print_help() {
   echo "  ${GREEN}connections-list ${YELLOW} List all connections${NORMAL}"
   echo "  ${GREEN}cache-build      ${YELLOW} Build cache for databases and tables${NORMAL}"
   echo "  ${GREEN}fk-add           ${YELLOW} Add a foreign key reference${NORMAL}"
-  echo "  ${GREEN}configure        ${YELLOW} Add/replace/remove a configuration value${NORMAL}"
+  echo "  ${GREEN}config           ${YELLOW} Add/replace/remove a configuration value${NORMAL}"
   echo "  ${GREEN}history          ${YELLOW} Show latest history entries${NORMAL}"
 }
 
@@ -60,8 +60,8 @@ case "$command" in
     ./navisql_query "$@"
      echo "navisql $command $1 $2 \"$3\"" >> "$HOME/.navisql/history"
     ;;
-  configure)
-    ./navisql_configure "$@"
+  config)
+    ./navisql_config "$@"
     ;;
   connection-add)
     ./navisql_connection_add "$@"

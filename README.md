@@ -7,13 +7,12 @@ This is a tiny but useful bash utility to navigate MySQL databases from the comm
 
 It is a wrapper around the `mysql` command line client, and it provides a few useful features: 
 
-- **Auto-completion**: it auto-completes table names, column names, and SQL keywords.
+- **Auto-completion**: it auto-completes connection names, database names, table names and column names.
 - **FK References**: it helps you navigate into related records by showing references.
 
 Requirements:
-- `mysql` command line client
+- `mysql-client` command line client
 - `jq` command line JSON processor
-  - (Install it with `sudo apt-get install jq`)
 
 Sample usage:
 -------------
@@ -39,8 +38,8 @@ Install it:
 
 Configure it:
 
-    # navisql add-connection <connection_name> <user> <password> [<host> [<port>]]
-    navisql add-connection local sebas asfdasfd
+    # navisql connection-add <connection_name> <user> <password> [<host> [<port>]]
+    navisql connection-add local sebas asfdasfd
 
     # navisql cache-build <connection>
     # will retrieve the list of databases and tables for the given connection
@@ -49,17 +48,17 @@ Configure it:
 
 Customize it:
 
-    # navisql_add_fk <connection> <db> <table> <field> <referenced_table> [<referenced_field>]"
+    # navisql fk-add <connection> <db> <table> <field> <referenced_table> [<referenced_field>]
 
     # Example fk:     users.user_group_id references user_groups.id
-    navisql add-fk local my_project_database users user_group_id user_groups
+    navisql fk-add local my_project_database users user_group_id user_groups
 
     # Example fk:     users.user_timezone_id references user_timezone.id
-    navisql add-fk local my_project_database users user_timezone_id user_timezone
+    navisql fk-add local my_project_database users user_timezone_id user_timezone
 
     # Add a web edit url template to the get links to the adminer tool
     # that you'll be able to ctrl+click to open in your browser:
-    navisql configure add "web_edit" "http://www.local.ip1.cc/adminer/?server={{SERVER}}&username={{USER}}&db={{DB}}&edit={{TABLE}}&where%5Bid%5D={{ID}}"
+    navisql config add "web_edit" "http://www.local.ip1.cc/adminer/?server={{SERVER}}&username={{USER}}&db={{DB}}&edit={{TABLE}}&where%5Bid%5D={{ID}}"
 
 Use it:
 

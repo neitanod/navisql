@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Function to add foreign key reference to the configuration file
-navisql_config() {
+navisql_config_() {
   # Load the configuration file
   local config_file="$HOME/.navisql/navisql.json"
 
@@ -43,10 +43,10 @@ navisql_remove_conf() {
 # Check if the correct number of arguments are provided
 if [ "$#" -lt 2 ]; then
   echo "Usage:"
-  echo "       navisql configure add <dot_separated_path> <value>"
-  echo "       navisql configure remove <dot_separated_path>"
+  echo "       navisql config add <dot_separated_path> <value>"
+  echo "       navisql config remove <dot_separated_path>"
   exit 1
 fi
 
 # Call the function with the provided arguments
-navisql_config "$1" "$2" "$3"
+navisql_config_ "$1" "$2" "$3"
