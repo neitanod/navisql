@@ -1,38 +1,59 @@
 #!/bin/bash
 
-# Function to add foreign key reference to the configuration file
+# Function to add foreign key reference to the CSV file
 navisql_add_fk() {
   local connection=$1
   local db=$2
   local table=$3
   local field=$4
-  local referenced_table=$5
-  local referenced_field=${6:-id}  # Default to 'id' if no referenced_field is provided
+  local referenced_db=$5
+  local referenced_table=$6
+  local referenced_field=${7:-id}  # Default to 'id' if no referenced_field is provided
 
-  # Load the configuration file
-  local config_file="$HOME/.navisql/navisql.json"
+  # Define the CSV file
+  local config_dir="$HOME/.navisql"
+  local csv_file="$config_dir/fk.csv"
 
-  # Check if the configuration file exists
-  if [ ! -f "$config_file" ]; then
-    echo "Configuration file not found: $config_file"
-    return 1
+  # Check if the configuration directory exists, if not create it
+  if [ ! -d "$config_dir" ]; then
+    echo "Configuration directory not found, creating: $config_dir"
+    mkdir -p "$config_dir"
   fi
 
-  # Add the foreign key reference to the configuration file using jq
-  jq --arg connection "$connection" --arg db "$db" --arg table "$table" --arg field "$field" --arg ref_table "$referenced_table" --arg ref_field "$referenced_field" '
-    .connection[$connection].foreign_keys[$table][$field] = {
-      "database": $db,
-      "table": $ref_table,
-      "id_field": $ref_field
-    }
-  ' "$config_file" > "$config_file.tmp" && mv "$config_file.tmp" "$config_file"
+  # Prepare the new entry
+  local new_entry="$connection,$db,$table,$field,$referenced_db,$referenced_table,$referenced_field"
 
-  echo "Foreign key reference added: $table.$field -> $referenced_table.$referenced_field"
+  # Check if the CSV file exists
+  if [ ! -f "$csv_file" ]; then
+    echo "$new_entry" > "$csv_file"
+    echo "Foreign key reference added: $db.$table.$field -> $referenced_db.$referenced_table.$referenced_field"
+    return 0
+  fi
+
+  # Check if the entry already exists and replace it if necessary
+  local temp_file=$(mktemp)
+  local replaced=0
+
+  while IFS= read -r line; do
+    if [[ "$line" == "$connection,$db,$table,$field,"* ]]; then
+      echo "$new_entry" >> "$temp_file"
+      replaced=1
+    else
+      echo "$line" >> "$temp_file"
+    fi
+  done < "$csv_file"
+
+  if [ $replaced -eq 0 ]; then
+    echo "$new_entry" >> "$temp_file"
+  fi
+
+  mv "$temp_file" "$csv_file"
+  echo "Foreign key reference added: $db.$table.$field -> $referenced_db.$referenced_table.$referenced_field"
 }
 
 # Check if the correct number of arguments are provided
 if [ "$#" -lt 5 ]; then
-  echo "Usage: navisql_add_fk <connection> <db> <table> <field> <referenced_table> [<referenced_field>]"
+  echo "Usage: navisql_add_fk <connection> <db> <table> <field> <referenced_db> <referenced_table> [<referenced_field>]"
   exit 1
 fi
 

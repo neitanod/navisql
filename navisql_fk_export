@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Function to export foreign key configurations
+navisql_fk_export() {
+  local connection=$1
+  local db=$2
+  local table=$3
+
+  # Define the CSV file
+  local fk_file="$HOME/.navisql/fk.csv"
+
+  # Check if the CSV file exists
+  if [ ! -f "$fk_file" ]; then
+    echo "Foreign key configuration file not found: $fk_file"
+    return 1
+  fi
+
+  # Build the grep pattern
+  local pattern="^$connection"
+  if [ -n "$db" ]; then
+    pattern+=",$db"
+  fi
+  if [ -n "$table" ]; then
+    pattern+=",$table"
+  fi
+
+  # Extract and print matching lines
+  grep "$pattern" "$fk_file" | while IFS=, read -r csv_connection csv_db csv_table csv_field csv_foreign_db csv_foreign_table csv_foreign_field; do
+    echo "navisql fk-add $csv_connection $csv_db $csv_table $csv_field $csv_foreign_db $csv_foreign_table $csv_foreign_field"
+  done
+}
+
+# Check if the correct number of arguments are provided
+if [ "$#" -gt 3 ]; then
+  echo "Usage: navisql_fk_export [<connection> [<db> [<table>]]]"
+  exit 1
+fi
+
+# Call the function with the provided arguments
+navisql_fk_export "$1" "$2" "$3"

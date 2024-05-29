@@ -31,6 +31,7 @@ print_help() {
   echo "  ${GREEN}connections-list ${YELLOW} List all connections${NORMAL}"
   echo "  ${GREEN}cache-build      ${YELLOW} Build cache for databases and tables${NORMAL}"
   echo "  ${GREEN}fk-add           ${YELLOW} Add a foreign key reference${NORMAL}"
+  echo "  ${GREEN}fk-export        ${YELLOW} Exports current foreign key configuration as shell commands${NORMAL}"
   echo "  ${GREEN}config           ${YELLOW} Add/replace/remove a configuration value${NORMAL}"
   echo "  ${GREEN}history          ${YELLOW} Show latest history entries${NORMAL}"
 }
@@ -77,6 +78,9 @@ case "$command" in
     ;;
   fk-add)
     ./navisql_fk_add "$@"
+    ;;
+  fk-export)
+    ./navisql_fk_export "$@"
     ;;
   history)
     # Print the history of commands

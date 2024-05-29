@@ -19,6 +19,7 @@ navisql() {
 
   # Load connection details from configuration file
   local config_file="$HOME/.navisql/navisql.json"
+  local fk_file="$HOME/.navisql/fk.csv"
   MYSQL_USER=$(get_config_value "connection.${connection}.user" "$config_file")
   MYSQL_USER=${MYSQL_USER:-root}
   MYSQL_PASSWORD=$(get_config_value "connection.${connection}.pass" "$config_file")
@@ -69,22 +70,21 @@ navisql() {
     fi
     navi_link=""
     link=""
-    foreign_key_config="connection.$connection.foreign_keys.$table.$column_name"
-    foreign_table=$(get_config_value "$foreign_key_config.table" "$config_file")
-    if [[ "$foreign_table" ]]; then
-      foreign_db=$(get_config_value "$foreign_key_config.database" "$config_file")
-      foreign_db=${foreign_db:-$db}
-      foreign_id_field=$(get_config_value "$foreign_key_config.id_field" "$config_file")
-      foreign_id_field=${foreign_id_field:-id}
+
+    # Search for foreign key in the CSV file using grep
+    fk_line=$(grep "^$connection,$db,$table,$column_name," "$fk_file")
+
+    if [[ -n "$fk_line" ]]; then
+      IFS=',' read -r _ _ _ _ foreign_db foreign_table foreign_id_field <<< "$fk_line"
       foreign_id_field_to_print=""
       if [[ "$foreign_id_field" != "id" ]]; then
-        foreign_id_field_to_print=" ($foreign_id_field)"
+        foreign_id_field_to_print=" $foreign_id_field"
       fi
-      #navi_link="${YELLOW}navisql show $connection $foreign_db $foreign_table ${columns[i]} $foreign_id_field_to_print${NORMAL}"
       link="navisql show $connection $foreign_db $foreign_table ${columns[i]} $foreign_id_field_to_print"
       navi_link=$(./navisql_link "$link")
       navi_link="[${YELLOW}$navi_link${NORMAL}]"
     fi
+
     echo "- ${GREEN}$column_name${NORMAL}: ${columns[i]} $navi_link"
   done
 
