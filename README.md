@@ -17,6 +17,8 @@ Requirements:
 Sample usage:
 -------------
 
+https://notas.ip1.cc/varios/navisql/navisql_usage_demo.mp4
+
 Install it:
 
     git clone https://github.com/neitanod/navisql.git ~/navisql
