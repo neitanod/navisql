@@ -91,20 +91,24 @@ navisql_ls() {
     IFS=$'\n' read -d '' -r -a rows <<< "$data"
 
     # Combine column names and data into objects
+    row_separator="\n"
     for row in "${rows[@]}"; do
       IFS=$'\t' read -r -a columns <<< "$row"
+      col_separator=" "
       for i in "${!columns[@]}"; do
         column_name=$(echo "${names[i]}" | awk '{print $1}')
         #escape double quotes
         #json_data+="\"$column_name\": \"${columns[i]}\", "
-        json_data+="\"$column_name\": \"${columns[i]//\"/\\\"}\", "
+        json_data+="${col_separator}\"$column_name\": \"${columns[i]//\"/\\\"}\""
+        col_separator=","
       done
       json_data=$(echo -e "$json_data")
       json_data="{ $json_data }"
-      json_output+="$json_data\n"
+      json_output+="${row_separator}$json_data"
+      row_separator=",\n"
       json_data=""
     done
-    echo -e "[$json_output]";
+    echo -e "[$json_output\n]";
     #echo -e "[$json_output]" | jq -s .
 
   fi

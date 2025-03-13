@@ -1,12 +1,12 @@
 #!/bin/bash
 
-is_sourced() {
+_navi_is_sourced() {
     # Comprueba si el script está siendo ejecutado en el contexto de la shell actual
     # o si está siendo ejecutado en una subshell (indirectamente a través de un source)
     [[ "${BASH_SOURCE[0]}" != "${0}" ]]
 }
 
-if ! is_sourced; then
+if ! _navi_is_sourced; then
     cd "$(dirname "$0")"
     source ./lib/colors.sh
     cat <<EOF
@@ -22,9 +22,8 @@ EOF
 fi
 
 
-
 # Check if the required folder and files exist, create if not
-initialize_files() {
+_navi_initialize_files() {
   local navi_folder="$HOME/.navisql"
   [ ! -d "$navi_folder" ] && mkdir "$navi_folder"
 
@@ -36,18 +35,18 @@ initialize_files() {
 }
 
 # Get connections from the config file
-get_connections() {
+_navi_get_connections() {
   jq -r '.connection | keys | .[]' ~/.navisql/navisql.json
 }
 
 # Get databases from the cache file
-get_databases() {
+_navi_get_databases() {
   local conn="$1"
   jq -r --arg conn "$conn" '.[$conn] | keys | .[]' ~/.navisql/navisql_cache.json
 }
 
 # Get tables from the cache file for a specific database
-get_tables() {
+_navi_get_tables() {
   local conn="$1"
   local db="$2"
   jq -r --arg conn "$conn" --arg db "$db" '.[$conn][$db] | .[]' ~/.navisql/navisql_cache.json
@@ -55,7 +54,7 @@ get_tables() {
 
 
 # Get fields from a live MySQL query
-get_fields() {
+_navi_get_fields() {
   local connection="$1"
   local db="$2"
   local table="$3"
@@ -68,40 +67,43 @@ get_fields() {
   mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -e "SHOW COLUMNS FROM $table" -s --skip-column-names | awk '{print $1}'
 }
 
-# Configuration arrays
-declare -A cmd_config
-
-cmd_config[show,2]="get_connections"
-cmd_config[show,3]="get_databases \$2"
-cmd_config[show,4]="get_tables \$2 \$3"
-
-cmd_config[fk-add,2]="get_connections"
-cmd_config[fk-add,3]="get_databases \$2"
-cmd_config[fk-add,4]="get_tables \$2 \$3"
-cmd_config[fk-add,5]="get_fields \$2 \$3 \$4"
-cmd_config[fk-add,6]="get_databases \$2"
-cmd_config[fk-add,7]="get_tables \$2 \$6"
-cmd_config[fk-add,8]="get_fields \$2 \$6 \$7"
-
-cmd_config[cache-build,2]="get_connections"
-
-cmd_config[connection-remove,2]="get_connections"
-
-cmd_config[ls,2]="get_connections"
-cmd_config[ls,3]="get_databases \$2"
-cmd_config[ls,4]="get_tables \$2 \$3"
-
-
 # Autocomplete function for navisql commands
 _navisql_autocomplete() {
+
+  # Configuration arrays
+  declare -A _navi_cmd_config
+
+  _navi_cmd_config[show,2]="_navi_get_connections"
+  _navi_cmd_config[show,3]="_navi_get_databases \$2"
+  _navi_cmd_config[show,4]="_navi_get_tables \$2 \$3"
+
+  _navi_cmd_config[fk-add,2]="_navi_get_connections"
+  _navi_cmd_config[fk-add,3]="_navi_get_databases \$2"
+  _navi_cmd_config[fk-add,4]="_navi_get_tables \$2 \$3"
+  _navi_cmd_config[fk-add,5]="_navi_get_fields \$2 \$3 \$4"
+  _navi_cmd_config[fk-add,6]="_navi_get_databases \$2"
+  _navi_cmd_config[fk-add,7]="_navi_get_tables \$2 \$6"
+  _navi_cmd_config[fk-add,8]="_navi_get_fields \$2 \$6 \$7"
+
+  _navi_cmd_config[cache-build,2]="_navi_get_connections"
+
+  _navi_cmd_config[connection-remove,2]="_navi_get_connections"
+
+  _navi_cmd_config[ls,2]="_navi_get_connections"
+  _navi_cmd_config[ls,3]="_navi_get_databases \$2"
+  _navi_cmd_config[ls,4]="_navi_get_tables \$2 \$3"
+
+  _navi_cmd_config[query,2]="_navi_get_connections"
+  _navi_cmd_config[query,3]="_navi_get_databases \$2"
+
   local cur prev opts
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-  opts="ls show config connection-add connection-remove connection-list cache-build fk-add fk-export history"
+  opts="ls show config connection-add connection-remove connection-list cache-build fk-add fk-export history query"
 
-  initialize_files
+  _navi_initialize_files
 
   if [[ ${COMP_CWORD} -eq 1 ]]; then
     # First argument: complete with command options
@@ -111,7 +113,7 @@ _navisql_autocomplete() {
 
   local cmd="${COMP_WORDS[1]}"
   local position="${COMP_CWORD}"
-  local func_def="${cmd_config[$cmd,$position]}"
+  local func_def="${_navi_cmd_config[$cmd,$position]}"
 
   if [[ -n "$func_def" ]]; then
     # Replace placeholders with actual arguments
@@ -129,13 +131,9 @@ _navisql_autocomplete() {
 # Register the autocomplete function for navisql commands
 complete -F _navisql_autocomplete navisql
 
-# Ensure the autocomplete function is loaded for zsh
-if [ -n "$ZSH_VERSION" ]; then
-  autoload -Uz compinit && compinit
-  autoload -U bashcompinit && bashcompinit
-  complete -F _navisql_autocomplete navisql
-fi
-
-
-
-
+# if [ -n "$ZSH_VERSION" ]; then
+#   autoload -Uz compinit
+#   compinit
+#   compdef _navisql_autocomplete navisql
+#   echo "navisql autocomplete loaded"
+# fi

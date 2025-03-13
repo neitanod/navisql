@@ -35,6 +35,14 @@ execute_command() {
   fi
 }
 
+if [[ "$1" == "--add" ]]; then
+  link=$2
+  navi_link=$(./navisql_link "$link")
+  navi_link="[${YELLOW}$navi_link${NORMAL}]"
+  echo $navi_link
+  exit 0
+fi
+
 # Check if the correct number of arguments are provided
 if [ "$#" -lt 1 ]; then
   echo "Usage: navi <key>"
