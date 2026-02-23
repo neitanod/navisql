@@ -64,7 +64,7 @@ _navi_get_fields() {
   local MYSQL_HOST=$(jq -r ".connection.$connection.host // empty" ~/.navisql/navisql.json)
   local MYSQL_PORT=$(jq -r ".connection.$connection.port // empty" ~/.navisql/navisql.json)
 
-  mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -e "SHOW COLUMNS FROM $table" -s --skip-column-names | awk '{print $1}'
+  mysql --skip-ssl -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -e "SHOW COLUMNS FROM $table" -s --skip-column-names | awk '{print $1}'
 }
 
 # Autocomplete function for navisql commands
@@ -96,12 +96,15 @@ _navisql_autocomplete() {
   _navi_cmd_config[query,2]="_navi_get_connections"
   _navi_cmd_config[query,3]="_navi_get_databases \$2"
 
+  _navi_cmd_config[run,2]="_navi_get_connections"
+  _navi_cmd_config[run,3]="_navi_get_databases \$2"
+
   local cur prev opts
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-  opts="ls show config connection-add connection-remove connection-list cache-build fk-add fk-export history query"
+  opts="ls show config connection-add connection-remove connection-list cache-build fk-add fk-export history query run"
 
   _navi_initialize_files
 

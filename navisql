@@ -26,6 +26,7 @@ print_help() {
   echo "  ${GREEN}ls               ${YELLOW} Prints a page of records from a given table${NORMAL}"
   echo "  ${GREEN}show             ${YELLOW} Show a record by id${NORMAL}"
   echo "  ${GREEN}query            ${YELLOW} Run a custom query${NORMAL}"
+  echo "  ${GREEN}run              ${YELLOW} Execute queries from a SQL file${NORMAL}"
   echo "  ${GREEN}connection-add   ${YELLOW} Add a new connection${NORMAL}"
   echo "  ${GREEN}connection-remove${YELLOW} Remove an existing connection${NORMAL}"
   echo "  ${GREEN}connections-list ${YELLOW} List all connections${NORMAL}"
@@ -60,6 +61,9 @@ case "$command" in
     save_history=false   # Save history in a custom way
     ./navisql_query "$@"
      echo "navisql $command $1 $2 \"$3\"" >> "$HOME/.navisql/history"
+    ;;
+  run)
+    ./navisql_run "$@"
     ;;
   config)
     ./navisql_config "$@"
