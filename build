@@ -1,0 +1,11 @@
+#!/bin/bash
+# Build navisql with version timestamp
+set -e
+
+VERSION="2.0.$(date +%Y%m%d%H%M)"
+echo "Building navisql version $VERSION"
+
+go build -ldflags "-X main.version=$VERSION" -o navisql ./cmd/navisql/
+
+echo "Done: ./navisql"
+./navisql --version

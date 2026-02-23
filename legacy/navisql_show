@@ -1,0 +1,106 @@
+#!/bin/bash
+
+source ./lib/colors.sh
+
+# Function to read configuration values
+get_config_value() {
+  local key=$1
+  local config_file=$2
+  jq -r ".$key // empty" "$config_file"
+}
+
+# Function to perform MySQL select and format the output
+navisql() {
+  local connection=$1
+  local db=$2
+  local table=$3
+  local id=${4:-id} # ID to search for, default to id to show the first record
+  local id_field=${5:-id}  # Default to 'id' if no id_field is provided
+
+  # Load connection details from configuration file
+  local config_file="$HOME/.navisql/navisql.json"
+  local fk_file="$HOME/.navisql/fk.csv"
+  MYSQL_USER=$(get_config_value "connection.${connection}.user" "$config_file")
+  MYSQL_USER=${MYSQL_USER:-root}
+  MYSQL_PASSWORD=$(get_config_value "connection.${connection}.pass" "$config_file")
+  MYSQL_HOST=$(get_config_value "connection.${connection}.host" "$config_file")
+  MYSQL_HOST=${MYSQL_HOST:-localhost}
+  MYSQL_PORT=$(get_config_value "connection.${connection}.port" "$config_file")
+  MYSQL_PORT=${MYSQL_PORT:-3306}
+  WEB_EDIT=$(get_config_value "web_edit" "$config_file")
+
+  # Perform the MySQL query
+  result=$(mysql --skip-ssl -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -se "SELECT * FROM $table WHERE $id_field = '$id';")
+  # replace \n with \\n
+  result=$(echo "$result" | sed 's/\n/\\n/g')
+  # replace \ with \\
+  result=$(echo "$result" | sed 's/\\/\\\\/g')
+
+  #debug:
+  #echo $result
+  #echo "${GREY_BG}mysql -u \"$MYSQL_USER\" -p\"$MYSQL_PASSWORD\" -h \"$MYSQL_HOST\" -P \"$MYSQL_PORT\" -D \"$db\" -se${NORMAL_BG}"
+  #echo "${GREY_BG}SELECT * FROM $table WHERE $id_field = '$id';${NORMAL_BG}"
+  #return
+
+  # Check if the result is empty
+  if [ -z "$result" ]; then
+    if [[ "$id" == "id" ]]; then
+      echo "No records found"
+    else
+      echo "No records found for $table where $id_field = $id"
+    fi
+    return
+  fi
+
+  # Get column names
+  column_names=$(mysql --skip-ssl -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -h "$MYSQL_HOST" -P "$MYSQL_PORT" -D "$db" -se "SHOW COLUMNS FROM $table;")
+  IFS=$'\n' read -d '' -r -a names <<< "$column_names"
+
+  mapfile -t columns < <(echo -e "$result" | awk -v RS='\t' '{print}')
+  mapfile -t columns < <(echo -e "$result" | awk -v RS='\t' '{print}')
+
+  RETURNED_ID=""
+
+  # Display the result with potential foreign key references
+  for i in "${!names[@]}"; do
+    column_name=$(echo "${names[i]}" | awk '{print $1}')
+    # if column name is "id", store in RETURNED_ID
+    if [[ "$column_name" == "id" ]]; then
+      RETURNED_ID="${columns[i]}"
+    fi
+    navi_link=""
+    link=""
+
+    # Search for foreign key in the CSV file using grep
+    fk_line=$(grep "^$connection,$db,$table,$column_name," "$fk_file" 2>/dev/null)
+
+    if [[ -n "$fk_line" ]]; then
+      IFS=',' read -r _ _ _ _ foreign_db foreign_table foreign_id_field <<< "$fk_line"
+      foreign_id_field_to_print=""
+      if [[ "$foreign_id_field" != "id" ]]; then
+        foreign_id_field_to_print=" $foreign_id_field"
+      fi
+      link="navisql show $connection $foreign_db $foreign_table ${columns[i]} $foreign_id_field_to_print"
+      navi_link=$(./navisql_link "$link")
+      navi_link="[${YELLOW}$navi_link${NORMAL}]"
+    fi
+
+    echo "- ${GREEN}$column_name${NORMAL}: ${columns[i]} $navi_link"
+  done
+
+  # Web edit link
+  if [[ "$WEB_EDIT" ]]; then
+    WEB_EDIT=$(echo "$WEB_EDIT" | sed "s/{{SERVER}}/$MYSQL_HOST/g" | sed "s/{{USER}}/$MYSQL_USER/g" | sed "s/{{DB}}/$db/g" | sed "s/{{TABLE}}/$table/g" | sed "s/{{ID}}/$RETURNED_ID/g")
+    navi_link_edit=$(./navisql_link "$WEB_EDIT")
+    echo "Web edit: [${YELLOW}$navi_link_edit${NORMAL}] ${GREY_BG} $WEB_EDIT ${NORMAL_BG}"
+  fi
+}
+
+# Check if the correct number of arguments are provided
+if [ "$#" -lt 3 ]; then
+  echo "Usage: navisql show <connection> <db> <table> <id> [<id_field>]"
+  exit 1
+fi
+
+# Call the function with the provided arguments
+navisql "$1" "$2" "$3" "$4" "$5"

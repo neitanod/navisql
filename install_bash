@@ -1,8 +1,27 @@
 #!/bin/bash
-echo 'navisql() {' >> ~/.bashrc
-echo '  ~/navisql/navisql "$@"' >> ~/.bashrc
-echo '}' >> ~/.bashrc
-echo 'navi() {' >> ~/.bashrc
-echo '  ~/navisql/navi "$@"' >> ~/.bashrc
-echo '}' >> ~/.bashrc
-echo 'source ~/navisql/navisql_autocomplete' >> ~/.bashrc
+
+# NaviSQL installation for bash
+# This script adds navisql to your PATH
+
+NAVISQL_DIR="${NAVISQL_DIR:-$HOME/navisql}"
+
+# Check if navisql binary exists
+if [ ! -f "$NAVISQL_DIR/navisql" ]; then
+    echo "Error: navisql binary not found at $NAVISQL_DIR/navisql"
+    echo "Please build it first with: cd $NAVISQL_DIR && ./build"
+    exit 1
+fi
+
+# Add to .bashrc if not already present
+if ! grep -q "# NaviSQL" ~/.bashrc 2>/dev/null; then
+    cat >> ~/.bashrc << 'EOF'
+
+# NaviSQL
+export PATH="$HOME/navisql:$PATH"
+source ~/navisql/navisql_autocomplete
+EOF
+    echo "NaviSQL added to ~/.bashrc"
+    echo "Run 'source ~/.bashrc' or restart your shell to use navisql"
+else
+    echo "NaviSQL already configured in ~/.bashrc"
+fi

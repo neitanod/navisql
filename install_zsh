@@ -1,8 +1,27 @@
 #!/bin/bash
-echo 'navisql() {' >> ~/.zshrc
-echo '  ~/navisql/navisql "$@"' >> ~/.zshrc
-echo '}' >> ~/.zshrc
-echo 'navi() {' >> ~/.zshrc
-echo '  ~/navisql/navi "$@"' >> ~/.zshrc
-echo '}' >> ~/.zshrc
-echo 'source ~/navisql/navisql_autocomplete' >> ~/.zshrc
+
+# NaviSQL installation for zsh
+# This script adds navisql to your PATH
+
+NAVISQL_DIR="${NAVISQL_DIR:-$HOME/navisql}"
+
+# Check if navisql binary exists
+if [ ! -f "$NAVISQL_DIR/navisql" ]; then
+    echo "Error: navisql binary not found at $NAVISQL_DIR/navisql"
+    echo "Please build it first with: cd $NAVISQL_DIR && ./build"
+    exit 1
+fi
+
+# Add to .zshrc if not already present
+if ! grep -q "# NaviSQL" ~/.zshrc 2>/dev/null; then
+    cat >> ~/.zshrc << 'EOF'
+
+# NaviSQL
+export PATH="$HOME/navisql:$PATH"
+source ~/navisql/navisql_autocomplete
+EOF
+    echo "NaviSQL added to ~/.zshrc"
+    echo "Run 'source ~/.zshrc' or restart your shell to use navisql"
+else
+    echo "NaviSQL already configured in ~/.zshrc"
+fi

@@ -6,7 +6,7 @@ source ./lib/colors.sh
 # Function to read and execute the command based on the key
 execute_command() {
   local key=$1
-  local links_file="$HOME/.navisql/links"
+  local links_file="$HOME/.navi/links"
 
   # Check if the links file exists
   if [ ! -f "$links_file" ]; then
