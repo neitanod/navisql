@@ -18,7 +18,7 @@ Sample usage:
 -------------
 
 
-![Video Demo](https://notas.ip1.cc/varios/navisql/navisql_usage_demo.gif)
+![Video Demo](https://varios.ip1.cc/navisql/navisql_usage_demo.gif)
 
 
 Install it:
